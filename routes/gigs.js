@@ -1,5 +1,7 @@
 const express = require('express');
 const db = require('../config/database');
+const Sequelize = require('sequelize');
+const Op = Sequelize.Op;
 
 // IMport Model
 const Gig = require('../models/Gig');
@@ -43,7 +45,7 @@ router.post('/add', async (req, res) => {
 
 		// Check for errors
 		if (errors.length > 0) {
-			res.render('add', {
+			return res.render('add', {
 				errors,
 				title,
 				technologies,
@@ -69,6 +71,25 @@ router.post('/add', async (req, res) => {
 
 			return res.render('gigs');
 		}
+	} catch (err) {
+		return res.json({
+			err: err.message,
+		});
+	}
+});
+
+router.get('/search', async (req, res) => {
+	let { term } = req.query;
+
+	term = term.toLowerCase();
+	try {
+		const gigs = await Gig.findAll({
+			where: { technologies: { [Op.like]: '%' + term + '%' } },
+		});
+
+		return res.render('gigs', {
+			gigs,
+		});
 	} catch (err) {
 		return res.json({
 			err: err.message,
